@@ -1,8 +1,5 @@
 package util;
 
-/**
- * Простейший интерфейс для сборщиков метрик.
- */
 public interface Metrics {
     void inc(String name);
     long getCount(String name);

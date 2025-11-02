@@ -4,9 +4,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.Map;
 
-/**
- * Thread-safe простая реализация Metrics.
- */
 public class SimpleMetrics implements Metrics {
     private final Map<String, LongAdder> counts = new ConcurrentHashMap<>();
     private final Map<String, Long> timers = new ConcurrentHashMap<>();
