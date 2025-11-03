@@ -9,11 +9,20 @@ import graph.dagsp.DagPaths.PathResultComp;
 import util.Metrics;
 import util.SimpleMetrics;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.Locale;
+
 
 public class Main {
+
+    private static String fmtMs(long nanos) {
+        return String.format(Locale.US, "%.3f", nanos / 1e6);
+    }
+
     public static void main(String[] args) {
-        String path = args.length > 0 ? args[0] : "data/tasks_example.json";
+        String path = args.length > 0 ? args[0] : "data/large_3_dense_cycles.json";
         System.out.println("Input file: " + path);
         try {
             TaskGraphIO.GraphData gd = TaskGraphIO.read(path);
@@ -105,9 +114,11 @@ public class Main {
                     targetCompShort = i;
                 }
             }
+            List<Integer> compPathShort = Collections.emptyList();
+            List<Integer> nodePathShort = Collections.emptyList();
             if (targetCompShort != -1 && bestShort < INF) {
-                List<Integer> compPathShort = DagPaths.reconstructComponentPath(shortest.parent, sourceComp, targetCompShort);
-                List<Integer> nodePathShort = DagPaths.reconstructNodePathFromComponentPath(compPathShort, cr, adjW, cr.compId, true);
+                compPathShort = DagPaths.reconstructComponentPath(shortest.parent, sourceComp, targetCompShort);
+                nodePathShort = DagPaths.reconstructNodePathFromComponentPath(compPathShort, cr, adjW, cr.compId, true);
                 System.out.printf("%nShortest example: targetComp=%d dist=%d%n", targetCompShort, bestShort);
                 System.out.println("  component path: " + compPathShort);
                 System.out.println("  representative node-level path: " + nodePathShort);
@@ -123,9 +134,11 @@ public class Main {
                     bestComp = e.getKey();
                 }
             }
+            List<Integer> compPathLong = Collections.emptyList();
+            List<Integer> nodePathLong = Collections.emptyList();
             if (bestComp != -1 && bestVal > Integer.MIN_VALUE / 8) {
-                List<Integer> compPathLong = DagPaths.reconstructComponentPath(longest.parent, sourceComp, bestComp);
-                List<Integer> nodePathLong = DagPaths.reconstructNodePathFromComponentPath(compPathLong, cr, adjW, cr.compId, false);
+                compPathLong = DagPaths.reconstructComponentPath(longest.parent, sourceComp, bestComp);
+                nodePathLong = DagPaths.reconstructNodePathFromComponentPath(compPathLong, cr, adjW, cr.compId, false);
                 System.out.printf("%nCritical (longest) path: targetComp=%d length=%d%n", bestComp, bestVal);
                 System.out.println("  component path: " + compPathLong);
                 System.out.println("  representative node-level path: " + nodePathLong);
@@ -141,10 +154,66 @@ public class Main {
             System.out.printf("n=%d m=%d directed=%b source=%s weight_model=%s%n",
                     gd.n, (gd.edges == null ? 0 : gd.edges.size()), gd.directed, gd.source, gd.weight_model);
 
+            // ---- CSV logging call ----
+            try {
+                String datasetName = Paths.get(path).getFileName().toString();
+                String nStr = Integer.toString(gd.n);
+                String mStr = Integer.toString(gd.edges == null ? 0 : gd.edges.size());
+                String directedStr = Boolean.toString(gd.directed);
+                String weightModel = gd.weight_model == null ? "edge" : gd.weight_model;
+                String sourceStr = Integer.toString(gd.source == null ? 0 : gd.source);
+
+                String sccCount = Integer.toString(sccs.size());
+                String largestScc = Integer.toString(sccs.stream().mapToInt(List::size).max().orElse(0));
+
+                String dfsVisits = Long.toString(metrics.getCount("dfs_visits"));
+                String dfsEdges = Long.toString(metrics.getCount("dfs_edges"));
+                String tarjanTimeMs = fmtMs(metrics.getTime("tarjan"));
+                String condensationTimeMs = fmtMs(tCond);
+
+                String topoLen = Integer.toString(topo.size());
+                String kahnPush = Long.toString(metrics.getCount("kahn_push"));
+                String kahnPop = Long.toString(metrics.getCount("kahn_pop"));
+                String kahnTimeMs = fmtMs(metrics.getTime("kahn"));
+
+                String dagRelax = Long.toString(metrics.getCount("dag_relaxations"));
+                String dagShortestMs = fmtMs(metrics.getTime("dag_shortest"));
+                String dagLongestMs = fmtMs(metrics.getTime("dag_longest"));
+
+                String shortestTargetCompStr = targetCompShort == -1 ? "-" : Integer.toString(targetCompShort);
+                String shortestTargetDistStr = (bestShort == Integer.MAX_VALUE/4) ? "-" : Integer.toString(bestShort);
+                String shortestNodePathLenStr = Integer.toString(nodePathShort == null ? 0 : nodePathShort.size());
+
+                String longestTargetCompStr = bestComp == -1 ? "-" : Integer.toString(bestComp);
+                String longestTargetDistStr = (bestVal == Integer.MIN_VALUE/4) ? "-" : Integer.toString(bestVal);
+                String longestNodePathLenStr = Integer.toString(nodePathLong == null ? 0 : nodePathLong.size());
+
+                String runId = Long.toString(System.currentTimeMillis());
+                String ts = util.CsvLogger.nowIso();
+
+                util.CsvLogger.appendRun(
+                        datasetName, nStr, mStr, directedStr, weightModel, sourceStr,
+                        sccCount, largestScc, dfsVisits, dfsEdges, tarjanTimeMs, condensationTimeMs,
+                        topoLen, kahnPush, kahnPop, kahnTimeMs,
+                        dagRelax, dagShortestMs, dagLongestMs,
+                        shortestTargetCompStr, shortestTargetDistStr, shortestNodePathLenStr,
+                        longestTargetCompStr, longestTargetDistStr, longestNodePathLenStr
+                );
+
+                System.out.println("Appended metrics to results/raw_results.csv");
+            } catch (Exception ex) {
+                System.err.println("Failed to write CSV: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+
+
         } catch (Exception ex) {
             System.err.println("Error: " + ex.getMessage());
             ex.printStackTrace();
             System.exit(2);
         }
+
+
+
     }
 }

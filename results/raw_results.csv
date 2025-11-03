@@ -1,0 +1,10 @@
+dataset;n;m;directed;weight_model;source;scc_count;largest_scc_size;dfs_visits;dfs_edges;tarjan_time_ms;condensation_time_ms;topo_order_len;kahn_push;kahn_pop;kahn_time_ms;dag_relaxations;dag_shortest_time_ms;dag_longest_time_ms;shortest_target_comp;shortest_target_dist;shortest_node_path_len;longest_target_comp;longest_target_dist;longest_node_path_len
+small_1_dag.json;6;6;TRUE;edge;0;6;1;6;6;15.123;5.699;6;6;6;1.899;12;2.996;0.096;4;1;2;0;10;5
+small_2_cycle.json;8;12;TRUE;edge;0;3;6;8;12;5.337;4.686;3;3;3;1.857;6;2.660;0.065;0;2;2;0;4;3
+small_3_mixed.json;9;11;TRUE;edge;3;3;3;9;11;6.655;5.714;3;3;3;2.168;2;4.303;0.075;0;4;2;0;4;2
+medium_1_sparse_dag.json;12;13;TRUE;edge;0;12;1;12;13;7.392;6.020;12;12;12;2.305;24;3.424;0.199;9;2;2;4;14;6
+medium_2_multi_scc.json;15;27;TRUE;edge;0;3;5;15;27;5.537;4.440;3;3;3;1.503;6;2.895;0.070;1;1;2;0;5;3
+medium_3_mixed.json;17;38;TRUE;edge;0;1;17;17;38;5.583;2.730;1;1;1;1.863;0;2.838;0.031;-;-;0;0;0;1
+large_1_sparse.json;22;37;TRUE;edge;0;22;1;22;37;6.952;5.820;22;22;22;1.777;32;3.524;0.126;7;1;2;0;11;5
+large_2_medium.json;26;115;TRUE;edge;0;26;1;26;115;5.234;9.499;26;26;26;2.700;230;4.389;0.594;22;1;2;0;44;23
+large_3_dense_cycles.json;30;245;TRUE;edge;0;30;1;30;245;6.339;23.305;30;30;30;3.782;490;5.960;0.648;21;1;2;0;58;30
